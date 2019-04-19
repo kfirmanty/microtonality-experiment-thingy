@@ -5,4 +5,5 @@
    :upper-freq 880
    :sequencer {}
    :step 0
+   :playing? false
    :tempo 100})

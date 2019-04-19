@@ -18,16 +18,40 @@
  (fn [db [_ value]]
    (assoc db :base-freq value)))
 
+(defn index-of-insert [freq freqs]
+  (let [freqs (sort freqs)
+        lower (filter #(< % freq) freqs)]
+    (count lower)))
+
+(defn update-steps [sequencer index update-fn]
+  (->> sequencer
+       (map (fn [[k v]] [k (if (>= v index)
+                             (update-fn v)
+                             v)]))
+       (into {})))
+
+(defn remove-steps [sequencer index]
+  (->> sequencer
+       (map (fn [[k v]] (when (not= v index) [k v])))
+       (filter some?)
+       (into {})))
+
 (rf/reg-event-db
  ::add-freq
  (fn [db [_ x y]]
-   (update db :freqs conj x)))
+   (let [index (index-of-insert x (:freqs db))]
+     (-> db (update :freqs conj x)
+         (update :sequencer update-steps index inc)))))
 
 (rf/reg-event-db
  ::remove-freq
  (fn [db [_ freq]]
-   (let [freqs (->> db :freqs (into #{}))]
-     (assoc db :freqs (remove #{freq} freqs)))))
+   (let [freqs (->> db :freqs (into #{}))
+         index (index-of-insert freq (:freqs db))]
+     (assoc db :freqs (remove #{freq} freqs)
+            :sequencer (-> db :sequencer
+                           (remove-steps index)
+                           (update-steps index dec))))))
 
 
 (rf/reg-event-db
@@ -69,6 +93,6 @@
        {:db (assoc db :step step)
         :dispatch-later [{:ms tempo-ms
                           :dispatch [::sequencer-play-step (inc step)]}]
-        ::trigger-synth [(:synth db) (when current-note
-                                       (synth/scale (nth freqs current-note) 0 500 (:base-freq db) (:upper-freq db)))]}
+        ::trigger-synth [(:synth db) (when (and current-note (not-empty freqs))
+                                       (synth/scale (nth (sort freqs) current-note) 0 500 (:base-freq db) (:upper-freq db)))]}
        {:db db}))))

@@ -15,11 +15,7 @@
            :style {:width "50%"}
            :on-change (fn [e]
                         (rf/dispatch [event (int (.. e -target -value))]))}])
-"    var e = evt.target;
-    var dim = e.getBoundingClientRect();
-    var x = evt.clientX - dim.left;
-    var y = evt.clientY - dim.top;
-"
+
 (defn svg-event->xy [evt]
   (let [e (.-target evt)
         dim (.getBoundingClientRect e)]
@@ -43,7 +39,7 @@
            :height height}
      (for [x (range steps) y (range notes)]
        (let [xr (* x size-x)
-             yr (* y size-y)]
+             yr (- height (* (inc y) size-y))]
          ^{:key (str (* 3.14 x) (* 100 y))} [:rect {:x xr :y yr
                                                     :fill-opacity (if (= y (get sequencer x -1))
                                                                     1.0

@@ -3,8 +3,7 @@
         reagent {:mvn/version "0.8.1"}
         re-frame {:mvn/version "0.10.6"}
         figwheel-sidecar {:mvn/version "0.5.15"}
-        cljsjs/tonejs {:mvn/version "0.8.0-1"}
-        re-pressed {:mvn/version "0.3.0"}}
+        cljsjs/tonejs {:mvn/version "0.8.0-1"}}
  :paths ["src" "resources"]
  :aliases {:fig {:extra-deps
                   {com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}
