@@ -33,7 +33,7 @@
 (rf/reg-event-db
  ::step-clicked
  (fn [db [_ x y]]
-   (update-in db [:sequencer x y] not)))
+   (assoc-in db [:sequencer x] y)))
 
 (rf/reg-event-fx
  ::sequencer-start
@@ -44,6 +44,11 @@
         :dispatch [::sequencer-play-step]}
        {:db (assoc db :synth synth :playing? false)}))))
 
+(rf/reg-event-db
+ ::set-tempo
+ (fn [db [_ tempo]]
+   (assoc db :tempo tempo)))
+
 (rf/reg-fx
  ::trigger-synth
  (fn [[synth freq]]
@@ -51,8 +56,7 @@
      (synth/play-note! synth freq))))
 
 (defn current-note [db step]
-  (let [turned-on (get-in db [:sequencer step])]
-    (->> turned-on (filter (fn [[k v]] (when v [k v]))) (filter some?) first first)))
+  (get-in db [:sequencer step]))
 
 (rf/reg-event-fx
  ::sequencer-play-step
@@ -60,7 +64,7 @@
    (let [freqs (:freqs db)
          step (mod step 16)
          current-note (current-note db step)
-         tempo-ms 500]
+         tempo-ms (- 1000 (* 6 (:tempo db)))]
      (if (:playing? db)
        {:db (assoc db :step step)
         :dispatch-later [{:ms tempo-ms

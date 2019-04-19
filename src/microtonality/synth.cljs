@@ -7,10 +7,10 @@
         new-span (- to-new from-new)]
     (+ from-new (* ratio new-span))))
 
-(def synth-settings (clj->js {:envelope {:attack 0.1
-                                         :decay 0.025
-                                         :sustain 0.3
-                                         :release 0.9}
+(def synth-settings (clj->js {:envelope {:attack 0.01
+                                         :decay 1.9
+                                         :sustain 0.0
+                                         :release 1.9}
                               :oscillator {:type "triangle"}}))
 
 (defn to-master [n]
@@ -26,7 +26,6 @@
   (set! (.-volume js/Tone.Master) -12))
 
 (defn play-note! [synth frequency]
-  (println "play-note! " synth " " frequency)
   (.triggerAttackRelease synth frequency))
 
 (defn release-note! [synth]

@@ -17,3 +17,15 @@
 (rf/reg-sub
  ::sequencer
  :sequencer)
+
+(rf/reg-sub
+ ::step
+ :step)
+
+(rf/reg-sub
+ ::tempo
+ :tempo)
+
+(rf/reg-sub
+ ::playing?
+ :playing?)

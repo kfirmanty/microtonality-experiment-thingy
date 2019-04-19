@@ -37,28 +37,31 @@
         notes (count @(rf/subscribe [::subs/freqs]))
         size-x (/ width steps)
         size-y (/ height notes)
-        sequencer @(rf/subscribe [::subs/sequencer])]
+        sequencer @(rf/subscribe [::subs/sequencer])
+        step @(rf/subscribe [::subs/step])]
     [:svg {:width width
            :height height}
      (for [x (range steps) y (range notes)]
        (let [xr (* x size-x)
              yr (* y size-y)]
          ^{:key (str (* 3.14 x) (* 100 y))} [:rect {:x xr :y yr
-                                                    :fill-opacity (if (get-in sequencer [x y])
+                                                    :fill-opacity (if (= y (get sequencer x -1))
                                                                     1.0
                                                                     0.0)
                                                     :stroke "black"
-                                                    :fill "black"
+                                                    :fill (if (not= x step) "black" "grey")
                                                     :width size-x
                                                     :height size-y
                                                     :on-click #(rf/dispatch [::events/step-clicked x y])}]))]))
 
-(defn hello-world []
+(defn page []
   (let [base-freq @(rf/subscribe [::subs/base-freq])
         upper-freq @(rf/subscribe [::subs/upper-freq])
         freqs @(rf/subscribe [::subs/freqs])
         svg-height 100
-        svg-width 500]
+        svg-width 500
+        playing? @(rf/subscribe [::subs/playing?])
+        tempo @(rf/subscribe [::subs/tempo])]
     [:article
      [:h1 "Microtonality Experiment Thingy"]
      [:section
@@ -82,13 +85,17 @@
                                     (clojure.string/join " ")))]
       [:h3 "Sequencer:"]
       [sequencer]
+      [:p "Tempo:"]
+      [slider ::events/set-tempo tempo 10 200]
       [:p
        [:button {:type "button"
                  :style {:height "50px" :width "100px"}
-                 :on-click #(rf/dispatch [::events/sequencer-start])} "Start!"]]]]))
+                 :on-click #(rf/dispatch [::events/sequencer-start])} (if playing?
+                                                                        "Stop!"
+                                                                        "Start!")]]]]))
 
 (defn mount [el]
-  (reagent/render-component [hello-world] el))
+  (reagent/render-component [page] el))
 
 (defn mount-app-element []
   (rf/dispatch-sync [::events/init])

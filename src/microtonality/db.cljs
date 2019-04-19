@@ -4,4 +4,5 @@
   {:base-freq 440
    :upper-freq 880
    :sequencer {}
-   :step 0})
+   :step 0
+   :tempo 100})
