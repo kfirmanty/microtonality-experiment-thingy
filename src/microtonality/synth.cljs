@@ -13,14 +13,16 @@
                                          :release 1.9}
                               :oscillator {:type "triangle"}}))
 
-(defn to-master [n]
+(defn to-master! [n]
   (.toMaster n))
 
-(defn create-synth! []
-  (let [synth (-> (new js/Tone.Synth synth-settings)
-                  to-master)]
-    (set! (.-volume synth) -32)
-    synth))
+(defn create-synth!
+  ([]
+   (create-synth! (new js/Tone.Synth synth-settings)))
+  ([synth]
+   (to-master! synth)
+   (set! (.-volume synth) -32)
+   synth))
 
 (defn set-master-defaults! []
   (set! (.-volume js/Tone.Master) -12))
@@ -30,3 +32,10 @@
 
 (defn release-note! [synth]
   (.triggerRelease synth))
+
+(defn safari-tonejs-fix-trigger []
+  (let [synth (create-synth! (new js/Tone.NoiseSynth (clj->js {:noise {:type  "white"}  
+                                                               :envelope {:attack 0.005
+                                                                          :decay 0.1
+                                                                          :sustain 0}})))]
+    (play-note! synth 100)))

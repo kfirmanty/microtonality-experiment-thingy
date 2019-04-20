@@ -5,7 +5,8 @@
    [re-frame.core :as rf]
    [microtonality.events :as events]
    [microtonality.subs :as subs]
-   [microtonality.synth :as synth]))
+   [microtonality.synth :as synth]
+   [clojure.string :as string]))
 
 (defn get-app-element []
   (gdom/getElement "app"))
@@ -50,6 +51,17 @@
                                                     :height size-y
                                                     :on-click #(rf/dispatch [::events/step-clicked x y])}]))]))
 
+(defn generate-scala-button []
+  (if-let [scala-file @(rf/subscribe [::subs/scala-file])]
+    [:a {:href scala-file
+         :class "hand-drawn"
+         :style {:height "50px" :width "100px"}
+         :on-click #(rf/dispatch [::events/scala-file-downloaded])
+         :download "met.scl"} "Download Scala file!"]
+    [:p {:class "hand-drawn"
+         :style {:height "50px" :width "100px"}
+         :on-click #(rf/dispatch [::events/export-scala-file])} "Generate Scala file!"]))
+
 (defn page []
   (let [base-freq @(rf/subscribe [::subs/base-freq])
         upper-freq @(rf/subscribe [::subs/upper-freq])
@@ -57,7 +69,8 @@
         svg-height 100
         svg-width 500
         playing? @(rf/subscribe [::subs/playing?])
-        tempo @(rf/subscribe [::subs/tempo])]
+        tempo @(rf/subscribe [::subs/tempo])
+        safari-tonejs-fix-triggered? @(rf/subscribe [::subs/safari-tonejs-fix-triggered?])]
     [:article
      [:h1 "Microtonality Experiment Thingy"]
      [:section
@@ -78,17 +91,22 @@
       [:p (str "Frequencies: " (->> freqs (map #(synth/scale % 0 svg-width base-freq upper-freq))
                                     (map #(.toFixed % 2))
                                     sort
-                                    (clojure.string/join " ")))]
+                                    (string/join " ")))]
       [:h3 "Sequencer:"]
       [sequencer]
       [:p "Tempo:"]
       [slider ::events/set-tempo tempo 10 200]
-      [:p
-       [:button {:type "button"
-                 :style {:height "50px" :width "100px"}
-                 :on-click #(rf/dispatch [::events/sequencer-start])} (if playing?
-                                                                        "Stop!"
-                                                                        "Start!")]]]]))
+      [:div {:class "hand-drawn"}
+       [:p {:class "hand-drawn"
+            :style {:height "50px" :width "100px"}
+            :on-click (fn []
+                        (when (not safari-tonejs-fix-triggered?)
+                          (synth/safari-tonejs-fix-trigger)) ;;UGLY SAFARI FIX FOR TONEJS TO PLAY
+                        (rf/dispatch [::events/sequencer-start]))} (if playing?
+                                                                   "Stop!"
+                                                                   "Start!")]
+       
+       [generate-scala-button]]]]))
 
 (defn mount [el]
   (reagent/render-component [page] el))

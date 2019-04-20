@@ -29,3 +29,12 @@
 (rf/reg-sub
  ::playing?
  :playing?)
+
+(rf/reg-sub
+ ::scala-file
+ (fn [db]
+   (:scala-file db)))
+
+(rf/reg-sub
+ ::safari-tonejs-fix-triggered?
+ :safari-tonejs-fix-triggered?)

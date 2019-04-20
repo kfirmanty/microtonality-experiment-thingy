@@ -1,2 +1,19 @@
 /* some style */
 
+div.hand-drawn{
+    width: 100px;
+    height: 100px;
+}
+
+div p.hand-drawn,a.hand-drawn{
+    margin-top:5%; 
+    text-align:center;
+    display:inline-block;
+    margin:5% auto;
+    border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+    padding:1em;
+    line-height:1.5em;
+    background: #fffff8;
+    border:solid 5px  #111;
+    cursor: pointer;
+}

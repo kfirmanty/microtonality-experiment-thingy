@@ -1,7 +1,8 @@
 (ns microtonality.events
   (:require [re-frame.core :as rf]
             [microtonality.db :as db]
-            [microtonality.synth :as synth]))
+            [microtonality.synth :as synth]
+            [clojure.string :as string]))
 
 (rf/reg-event-db
  ::init
@@ -62,7 +63,8 @@
 (rf/reg-event-fx
  ::sequencer-start
  (fn [{:keys [db]} _]
-   (let [synth (or (:synth db) (synth/create-synth!))]
+   (let [synth (or (:synth db) (synth/create-synth!))
+         db (assoc db :safari-tonejs-fix-triggered? true)] ;;UGLY SAFARI FIX FOR TONEJS TO PLAY
      (if (not (:playing? db))
        {:db (assoc db :step 0 :playing? true :synth synth)
         :dispatch [::sequencer-play-step]}
@@ -85,14 +87,35 @@
 (rf/reg-event-fx
  ::sequencer-play-step
  (fn [{:keys [db]} [_ step]]
-   (let [freqs (:freqs db)
+   (let [{:keys [freqs tempo playing? base-freq upper-freq scale-picker-width synth]} db
          step (mod step 16)
          current-note (current-note db step)
-         tempo-ms (- 1000 (* 6 (:tempo db)))]
-     (if (:playing? db)
+         tempo-ms (- 1000 (* 6 tempo))]
+     (if playing?
        {:db (assoc db :step step)
         :dispatch-later [{:ms tempo-ms
                           :dispatch [::sequencer-play-step (inc step)]}]
-        ::trigger-synth [(:synth db) (when (and current-note (not-empty freqs))
-                                       (synth/scale (nth (sort freqs) current-note) 0 500 (:base-freq db) (:upper-freq db)))]}
+        ::trigger-synth [synth (when (and current-note (not-empty freqs))
+                                 (synth/scale (nth (sort freqs) current-note) 0 scale-picker-width base-freq upper-freq))]}
        {:db db}))))
+
+(defn ->scala-file [freqs file-name desc comment]
+  (string/join \newline (flatten [(str "!" file-name)
+                                  (str "!" comment)
+                                  desc
+                                  freqs])))
+
+(rf/reg-event-db
+ ::export-scala-file
+ (fn [{:keys [freqs base-freq upper-freq scale-picker-width] :as db} _]
+   (let [freqs (map #(synth/scale % 0 scale-picker-width base-freq upper-freq) freqs)
+         base64-contents (-> (->scala-file freqs "met.scl"
+                                           (str "Base freq: " base-freq " Upper freq: " upper-freq)
+                                           "http://firmanty.com/met/")
+                             js/btoa)]
+     (assoc db :scala-file (str "data:application/octet-stream;charset=utf-8;base64," base64-contents)))))
+
+(rf/reg-event-db
+ ::scala-file-downloaded
+ (fn [db _]
+   (dissoc db :scala-file)))

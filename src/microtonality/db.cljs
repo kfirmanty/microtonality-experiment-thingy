@@ -6,4 +6,6 @@
    :sequencer {}
    :step 0
    :playing? false
-   :tempo 100})
+   :tempo 100
+   :scale-picker-width 500
+   :safari-tonejs-fix-triggered? false})
