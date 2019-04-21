@@ -62,15 +62,28 @@
          :style {:height "50px" :width "100px"}
          :on-click #(rf/dispatch [::events/export-scala-file])} "Generate Scala file!"]))
 
+(defn control-buttons []
+  (let [safari-tonejs-fix-triggered? @(rf/subscribe [::subs/safari-tonejs-fix-triggered?])
+        playing? @(rf/subscribe [::subs/playing?])]
+    [:div {:class "hand-drawn"}
+     [:p {:class "hand-drawn"
+          :style {:height "50px" :width "100px"}
+          :on-click (fn []
+                      (when (not safari-tonejs-fix-triggered?)
+                        (println "safari-fix-triggered")
+                        (synth/safari-tonejs-fix-trigger!)) ;;UGLY SAFARI FIX FOR TONEJS TO PLAY
+                      (rf/dispatch [::events/sequencer-start]))} (if playing?
+                                                                   "Stop!"
+                                                                   "Start!")]
+     [generate-scala-button]]))
+
 (defn page []
   (let [base-freq @(rf/subscribe [::subs/base-freq])
         upper-freq @(rf/subscribe [::subs/upper-freq])
         freqs @(rf/subscribe [::subs/freqs])
         svg-height 100
         svg-width 500
-        playing? @(rf/subscribe [::subs/playing?])
-        tempo @(rf/subscribe [::subs/tempo])
-        safari-tonejs-fix-triggered? @(rf/subscribe [::subs/safari-tonejs-fix-triggered?])]
+        tempo @(rf/subscribe [::subs/tempo])]
     [:article
      [:h1 "Microtonality Experiment Thingy"]
      [:section
@@ -96,17 +109,7 @@
       [sequencer]
       [:p "Tempo:"]
       [slider ::events/set-tempo tempo 10 200]
-      [:div {:class "hand-drawn"}
-       [:p {:class "hand-drawn"
-            :style {:height "50px" :width "100px"}
-            :on-click (fn []
-                        (when (not safari-tonejs-fix-triggered?)
-                          (synth/safari-tonejs-fix-trigger)) ;;UGLY SAFARI FIX FOR TONEJS TO PLAY
-                        (rf/dispatch [::events/sequencer-start]))} (if playing?
-                                                                   "Stop!"
-                                                                   "Start!")]
-       
-       [generate-scala-button]]]]))
+      [control-buttons]]]))
 
 (defn mount [el]
   (reagent/render-component [page] el))

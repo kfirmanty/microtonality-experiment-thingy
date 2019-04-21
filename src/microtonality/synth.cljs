@@ -7,6 +7,13 @@
         new-span (- to-new from-new)]
     (+ from-new (* ratio new-span))))
 
+(defn ->cents [f1 f2]
+  (* 1200 (/ (Math/log (/ f2 f1)) (Math/log 2))))
+
+(defn freqs->cents [freqs]
+  (let [[base-freq & rest-freq] freqs]
+    (map #(->cents base-freq %) rest-freq)))
+
 (def synth-settings (clj->js {:envelope {:attack 0.01
                                          :decay 1.9
                                          :sustain 0.0
@@ -33,7 +40,7 @@
 (defn release-note! [synth]
   (.triggerRelease synth))
 
-(defn safari-tonejs-fix-trigger []
+(defn safari-tonejs-fix-trigger! []
   (let [synth (create-synth! (new js/Tone.NoiseSynth (clj->js {:noise {:type  "white"}  
                                                                :envelope {:attack 0.005
                                                                           :decay 0.1

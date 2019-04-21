@@ -99,19 +99,21 @@
                                  (synth/scale (nth (sort freqs) current-note) 0 scale-picker-width base-freq upper-freq))]}
        {:db db}))))
 
-(defn ->scala-file [freqs file-name desc comment]
+(defn ->scala-file [cents file-name desc]
   (string/join \newline (flatten [(str "!" file-name)
-                                  (str "!" comment)
                                   desc
-                                  freqs])))
+                                  (count cents)
+                                  cents])))
 
 (rf/reg-event-db
  ::export-scala-file
  (fn [{:keys [freqs base-freq upper-freq scale-picker-width] :as db} _]
-   (let [freqs (map #(synth/scale % 0 scale-picker-width base-freq upper-freq) freqs)
-         base64-contents (-> (->scala-file freqs "met.scl"
-                                           (str "Base freq: " base-freq " Upper freq: " upper-freq)
-                                           "http://firmanty.com/met/")
+   (let [freqs (->> freqs
+                    sort
+                    (map #(synth/scale % 0 scale-picker-width base-freq upper-freq)))
+         cents (synth/freqs->cents freqs)
+         base64-contents (-> (->scala-file cents "met.scl"
+                                           (str "Generated using http://firmanty.com/met/ " "frequencies: " (string/join " " (sort freqs))))
                              js/btoa)]
      (assoc db :scala-file (str "data:application/octet-stream;charset=utf-8;base64," base64-contents)))))
 
